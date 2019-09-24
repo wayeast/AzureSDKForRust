@@ -1,11 +1,21 @@
 use super::rest_client::{perform_request, ServiceType};
 use crate::azure::core::errors::AzureError;
 use crate::azure::core::No;
+use crate::azure::core::shared_access_signature::{
+    SharedAccessSignature,
+    SasResource,
+    SasResourceType,
+    SasPermissions,
+    SasProtocol,
+};
+use crate::azure::core::COMPLETE_ENCODE_SET;
+use chrono::{DateTime, Utc};
 use crate::azure::storage::{blob, container};
 use hyper::{self, Method};
 use hyper_tls;
 use std::borrow::Borrow;
 use url::Url;
+use url::percent_encoding::utf8_percent_encode;
 
 pub trait Blob {
     fn list_blobs<'a>(&'a self) -> blob::requests::ListBlobBuilder<'a, No>;
@@ -126,6 +136,51 @@ impl Blob for Client {
 
     fn stream_blob<'a>(&'a self) -> blob::BlobStreamBuilder<'a, No, No, No> {
         blob::BlobStreamBuilder::new(self)
+    }
+
+    pub fn generate_shared_access_token(
+        &self,
+        resource_type: SasResourceType,
+        permissions: SasPermissions,
+        expiry: DateTime<Utc>,
+        start: Option<DateTime<Utc>>,
+        ip: Option<&str>,
+        protocol: Option<SasProtocol>,
+    ) -> String
+    {
+        let mut sas = SharedAccessSignature::new(&self.account, &self.key)
+            .with_resource(SasResource::Blob)
+            .with_resource_type(resource_type)
+            .with_permissions(permissions)
+            .with_expiry(expiry)
+            .finish();
+        if let Some(start) = start {
+            sas.set_start(start);
+        }
+        if let Some(ip) = ip {
+            sas.set_ip(ip.to_string());
+        }
+        if let Some(protocol) = protocol {
+            sas.set_protocol(protocol);
+        }
+
+        sas.token()
+    }
+
+    pub fn make_signed_blob_url(
+        &self,
+        container: &str,
+        blob: &str,
+        signed_token: &str,
+    ) -> String
+    {
+        format!(
+            "{}/{}/{}?{}",
+            self.blob_uri(),
+            utf8_percent_encode(container, COMPLETE_ENCODE_SET),
+            utf8_percent_encode(blob, COMPLETE_ENCODE_SET),
+            signed_token,
+        )
     }
 }
 

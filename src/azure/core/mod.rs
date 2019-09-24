@@ -43,6 +43,7 @@ mod stored_access_policy;
 pub(crate) mod util;
 pub use self::stored_access_policy::{StoredAccessPolicy, StoredAccessPolicyList};
 use chrono::{DateTime, Utc};
+pub mod shared_access_signature;
 
 define_encode_set! {
     pub COMPLETE_ENCODE_SET = [percent_encoding::USERINFO_ENCODE_SET] | {
