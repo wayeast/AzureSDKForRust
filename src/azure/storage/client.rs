@@ -37,6 +37,21 @@ pub trait Blob {
     fn delete_blob<'a>(&'a self) -> blob::requests::DeleteBlobBuilder<'a, No, No, No>;
     fn stream_list_blobs<'a>(&'a self) -> blob::ListBlobStreamBuilder<'a, No>;
     fn stream_blob<'a>(&'a self) -> blob::BlobStreamBuilder<'a, No, No, No>;
+    fn generate_shared_access_token(
+        &self,
+        resource_type: SasResourceType,
+        permissions: SasPermissions,
+        expiry: DateTime<Utc>,
+        start: Option<DateTime<Utc>>,
+        ip: Option<&str>,
+        protocol: Option<SasProtocol>,
+    ) -> String;
+    fn make_signed_blob_url(
+        &self,
+        container: &str,
+        blob: &str,
+        signed_token: &str,
+    ) -> String;
 }
 
 pub trait Container {
@@ -138,7 +153,7 @@ impl Blob for Client {
         blob::BlobStreamBuilder::new(self)
     }
 
-    pub fn generate_shared_access_token(
+    fn generate_shared_access_token(
         &self,
         resource_type: SasResourceType,
         permissions: SasPermissions,
@@ -167,7 +182,7 @@ impl Blob for Client {
         sas.token()
     }
 
-    pub fn make_signed_blob_url(
+    fn make_signed_blob_url(
         &self,
         container: &str,
         blob: &str,

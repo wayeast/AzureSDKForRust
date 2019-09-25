@@ -18,3 +18,11 @@ pub use crate::azure::core::{
 pub use crate::azure::storage::container::PublicAccessSupport;
 
 pub use crate::azure::storage::client::{Blob as BlobTrait, Client, Container as ContainerTrait};
+
+pub use crate::azure::core::shared_access_signature::{
+    SharedAccessSignature,
+    SasResource,
+    SasResourceType,
+    SasPermissions,
+    SasProtocol,
+};
